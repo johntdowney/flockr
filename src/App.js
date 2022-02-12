@@ -112,7 +112,7 @@ const ParticlesView = (props)=> {
                 let isRepelled = distance < ((props.width/10) * props.config.bubble);
                 let influenceVec;
                 if (isRepelled) influenceVec = new Vector(p.x - p2.x, p.y - p2.y).scale(props.config.repellent) 
-                else influenceVec = new Vector(p2.x - p.x, p2.y - p.y).scale(props.config.attraction/100);
+                else influenceVec = new Vector(p2.x - p.x, p2.y - p.y).scale(props.config.attraction/10000);
                 
                 p.v.add(influenceVec).normalize();
             }
@@ -184,8 +184,8 @@ class Particles extends React.Component {
                 this.models.push(m);
                 this.lattice.add(m);
             }
-            while(value > this.models.length) {
-                let m = this.models[this.models.length];
+            while(value < this.models.length) {
+                let m = this.models[this.models.length-1];
                 this.lattice.delete(m);
                 this.models.pop();
             }
@@ -194,7 +194,7 @@ class Particles extends React.Component {
     }
     createRandomParticle() {
 
-        let radius = 1+(Math.random() * 5);
+        let radius = 3+(Math.random() * 5);
         let x = Math.random() * this.config.width;
         let y = Math.random() * this.config.height;
 
@@ -202,10 +202,10 @@ class Particles extends React.Component {
         y = Math.min(Math.max(y, radius), this.config.height-radius);
         let dx = Math.random() - 0.5;
         let dy = Math.random() - 0.5;
-        let speed = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
+        let speed = 1;//Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
         dx /= speed;
         dy /= speed;
-        speed /= radius;
+        speed /= (radius);
         //        speed = 1;
 
         return {id:uuidv4(), x:x, y:y, v: new Vector(dx, dy), s:speed, r:radius};
@@ -279,15 +279,15 @@ class Particles extends React.Component {
 
 function App() {
     let config = {
-        count:100,
+        count:40,
         height:600,
         width:800,
-        attraction:0,
-        bubble: 0,
-        sight:3,
-        repellent: 0,
-        herd:0.1,
-        speed:10,
+        attraction:0.125,
+        bubble: 0.035,
+        sight:4,
+        repellent: 0.028,
+        herd:0.45,
+        speed:25,
         latticeSize: 10
     }
 
