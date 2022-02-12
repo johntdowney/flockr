@@ -1,5 +1,10 @@
 .App {
-  text-align: center;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .App-logo {
@@ -35,4 +40,41 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+
+.particles-view {
+    background-color:rgb(101, 101, 128);
+    height:100%;
+    width:100%;
+    
+} 
+.particles-view svg {
+    width:100%;
+    height:100%;
+}
+.particles-container .controls {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+    text-transform: uppercase;
+    justify-content: space-between;
+    max-height: 100vh;
+    overflow: auto;
+    background-color: #0000004a;
+    color: #eeeeee;
+    border-radius: 6px;
+}
+.particles-container {
+    height:100%;
+}
+.particles-container .controls > * {
+    display:flex;
+    flex-direction:column;
+    margin:4px;
 }
