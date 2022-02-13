@@ -64,6 +64,8 @@ class Lattice extends Array {
     
     constructor(cols, width, height) {
         super();
+        this.itemMap = new Map();
+        
         this.width = width;
         this.height = height;
         this.cols = cols;
@@ -81,14 +83,41 @@ class Lattice extends Array {
             row: Math.floor(Math.max(0, Math.min(this.height, y)) / this.cellSize)
         };
     }
-    
+    distanceToCell(row, col, x, y) {
+        let cellX = col * this.cellSize;
+        let cellY = row * this.cellSize;
+        let cellBottom = cellY + this.cellSize;
+        let cellRight = cellX + this.cellSize;
+        return Math.min(
+            Math.sqrt(Math.pow(cellX - x, 2) + Math.pow(cellY - y, 2)),
+            Math.sqrt(Math.pow(cellX - x, 2) + Math.pow(cellBottom - y, 2)),
+            Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellY - y, 2)),
+            Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellBottom - y, 2))
+        )
+        
+    }
     add(model) {
         let mCoords = this.xyToMatrix(model.x, model.y)
+        this.itemMap.set(model, mCoords)
         this[mCoords.row][mCoords.col].add(model);
     }
     delete(model) {
-        let mCoords = this.xyToMatrix(model.x, model.y)
-        this[mCoords.row][mCoords.col].delete(model);
+        if(this.itemMap.has(model)) {
+            
+            let mCoords = this.itemMap.get(model);
+            this.itemMap.delete(model);
+            this[mCoords.row][mCoords.col].delete(model);
+        }
+    }
+    
+    updatePosition(model) {
+        let mCoords = this.xyToMatrix(model.x, model.y);
+        if(!this[mCoords.row][mCoords.col].has(model)) {
+            this[mCoords.row][mCoords.col].add(model);
+            let prevMCoords = this.itemMap.get(model);
+            if(prevMCoords) this[prevMCoords.row][prevMCoords.col].delete(model);
+            this.itemMap.set(model, mCoords);
+        }
     }
 }
 
@@ -97,49 +126,62 @@ const ParticlesView = (props)=> {
     const [count, setCount] = React.useState(0)
 
     const updateTimeStep = (timestep) => {
-
-        for(let p of props.models) {
+        const allModels = [...props.models.itemMap.keys()];
+        for(let p of allModels) {
             let avgVec = new Vector(0, 0);
+            let latticeCoords = props.models.itemMap.get(p);
+            let sightRadius = ((props.width) * props.config.sight);
+            let topLeftLatticeCell = props.models.xyToMatrix(p.x - sightRadius, p.y - sightRadius);
+            let bottomRightLatticeCell = props.models.xyToMatrix(p.x + sightRadius, p.y + sightRadius);
+            
             let neighborCount = 0;
-            for(let p2 of props.models) {
-                if (p == p2) continue;
-                let distance = new Vector(p.x - p2.x, p.y - p2.y).magnitude() - (p.r + p2.r);
-                
-                let isNeighborInSight = distance > ((props.width) * props.config.sight);
-                
-                if(isNeighborInSight) continue;
-                neighborCount++;
-                avgVec.add(p2.v)
-                let isRepelled = distance < ((props.width/10) * props.config.bubble);
-                let influenceVec;
-                if (isRepelled) influenceVec = new Vector(p.x - p2.x, p.y - p2.y).scale(props.config.repellent/100) 
-                else influenceVec = new Vector(p2.x - p.x, p2.y - p.y).scale(props.config.attraction/5000);
-                
-                p.v.add(influenceVec).normalize();
+            for(let i = topLeftLatticeCell.row; i < bottomRightLatticeCell.row + 1; i++) {
+                 
+                for(let j = topLeftLatticeCell.col; j < bottomRightLatticeCell.col + 1; j++) {
+                    
+                    if(props.models.distanceToCell(i,j,p.x,p.y) < sightRadius) {
+                        for(let p2 of props.models[i][j]) {
+                            if (p == p2) continue;
+                            let distance = new Vector(p.x - p2.x, p.y - p2.y).magnitude() - (p.r + p2.r);
+
+                            let isNeighborInSight = distance > ((props.width) * props.config.sight);
+
+                            if(isNeighborInSight) continue;
+                            neighborCount++;
+                            avgVec.add(p2.v)
+                            let isRepelled = distance < ((props.width/10) * props.config.bubble);
+                            let influenceVec;
+                            if (isRepelled) influenceVec = new Vector(p.x - p2.x, p.y - p2.y).scale(props.config.repellent/100) 
+                            else influenceVec = new Vector(p2.x - p.x, p2.y - p.y).scale(props.config.attraction/5000);
+
+                            p.v.add(influenceVec).normalize();
+                        }
+                    }
+                }   
             }
+            
             if(neighborCount > 0) {
-                p.v.add(avgVec.normalize().scale(0.05 * props.config.herd));
+                p.v.add(avgVec.normalize().scale(0.05 * props.config.herd)).normalize();
             }
             
             if(props.config.pointerOver) {
-//                console.log("POINTER OVER");
                 let ptr = props.config.pointer;
                 let distance = new Vector(p.x - ptr.x, p.y - ptr.y).magnitude() - p.r;
                 let isPtrInSight = distance <= ((props.width) * props.config.sight);
                 if(isPtrInSight) {
                     p.v.add(new Vector(ptr.x - p.x, ptr.y - p.y).scale(props.config.attraction/50)).normalize();
                     if(props.config.pointerDown) {
-                        console.log("POINTER DOWN");
                         let ptr = props.config.pointer;
 
                         p.v.add(new Vector(p.x - ptr.x, p.y - ptr.y).scale(props.config.attraction/5)).normalize();
                     }
                 }
-                
             }
         }
 
-        for(let p of props.models) {
+        for(let p of allModels) {
+            
+            p.v.normalize();
             p.x += p.v[0] * p.s * (props.config.speed * 100);
             p.y += p.v[1] * p.s * (props.config.speed * 100);
 
@@ -147,6 +189,7 @@ const ParticlesView = (props)=> {
             while((p.y - p.r) > props.height) p.y -= props.height;
             while((p.x + p.r) < 0) p.x += props.width;
             while((p.y + p.r) < 0) p.y += props.height;
+            props.models.updatePosition(p)
         }  
 
     }
@@ -158,7 +201,7 @@ const ParticlesView = (props)=> {
         setCount(prevCount => (prevCount + deltaTime * 0.01) % 100)
         updateTimeStep(time);
     })
-    const ps = props.models.map((model) => {
+    const ps = [...props.models.itemMap.keys()].map((model) => {
         return  <g key={model.id}>
                     <circle cx={isNaN(model.x)?0:model.x} cy={isNaN(model.y)?0:model.y} r={model.r} fill="rgba(255,255,255,0.3)"/>
                 </g>;
@@ -219,7 +262,6 @@ class Particles extends React.Component {
         this.config = props.config;
         this.state = JSON.parse(JSON.stringify(props.config));
         this.models = props.models;
-        this.lattice = props.lattice;
         this.onSliderChange = this.onSliderChange.bind(this);    
     }
 
@@ -236,15 +278,16 @@ class Particles extends React.Component {
 
         if(name === 'count') {
             value = parseInt(value);
-            while(value > this.models.length) {
+            while(value > this.models.itemMap.size) {
                 let m = new Particle(this.config.width, this.config.height);
-                this.models.push(m);
-                this.lattice.add(m);
+                this.models.add(m);
             }
-            while(value < this.models.length) {
-                let m = this.models[this.models.length-1];
-                this.lattice.delete(m);
-                this.models.pop();
+            while(value < this.models.itemMap.size) {
+                let m = this.models.itemMap.keys().next().value;
+                if(m) {
+                    this.models.delete(m);
+                }
+                
             }
         }
         this.config[name] = value;
@@ -337,12 +380,12 @@ class Particles extends React.Component {
 
 function App() {
     let config = {
-        count:30,
+        count:5,
         width: window.innerWidth,
         height: window.innerHeight,
         attraction:0.125,
         bubble: 0.035,
-        sight:0.4,
+        sight:0.02,
         repellent: 0.028,
         herd:0.45,
         speed:0.15,
@@ -362,7 +405,7 @@ function App() {
 
     return (
         <div id="app-container" className="App">
-            <Particles config={config} models={models} lattice={lattice} />
+            <Particles config={config} models={lattice}/>
         </div>
     );
 }
