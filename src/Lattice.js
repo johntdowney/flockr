@@ -8,6 +8,7 @@ export default class Lattice extends Array {
         this.height = height;
         this.updateCols();
     }
+    
     updateCols() {
         let targetCells = Math.ceil(this.itemMap.size / this.targetCellCount);
         if(this.itemMap.size == 0) {
@@ -57,10 +58,9 @@ export default class Lattice extends Array {
             col: Math.min(this.cols-1, Math.floor(Math.max(0, Math.min(this.width, x)) / this.cellWidth)),
             row: Math.min(this.rows-1, Math.floor(Math.max(0, Math.min(this.height, y)) / this.cellHeight))
         };
-        
-//        console.log(`xyToMatrix(${x}, ${y}) = `,r);
         return r;
     }
+    
     distanceToCell(row, col, x, y) {
         let cellX = col * this.cellWidth;
         let cellY = row * this.cellHeight;
@@ -72,22 +72,21 @@ export default class Lattice extends Array {
             Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellY - y, 2)),
             Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellBottom - y, 2))
         )
-        
     }
+    
     add(model) {
         let mCoords = this.xyToMatrix(model.x, model.y)
         this.itemMap.set(model, mCoords)
         this[mCoords.row][mCoords.col].add(model);
         this.updateCols();
     }
+    
     delete(model) {
         if(this.itemMap.has(model)) {
-            
             let mCoords = this.itemMap.get(model);
             this.itemMap.delete(model);
             this[mCoords.row][mCoords.col].delete(model);
             this.updateCols(); 
-            
         }
     } 
     

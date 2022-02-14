@@ -19,14 +19,11 @@ function App() {
         pointerDown:false
     }
     
-    const models = [];
-    for(let i = 0; i < config.count; i++) models.push(new Particle(config.width, config.height));
     const lattice = new Lattice(config.latticeSize, config.width, config.height);
     
-    for(let i = 0; i < models.length; i++) {
-        lattice.add(models[i]);
+    for(let i = 0; i < config.count; i++) {
+        lattice.add(new Particle(config.width, config.height));
     }
-    console.log("lattice = ", lattice);
 
     return (
         <div id="app-container" className="App">
