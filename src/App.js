@@ -1,16 +1,13 @@
 //import logo from './logo.svg';
 import './App.css';
 import React from "react";
+import Vector from "./Vector.js";
+import Particle from "./Particle.js";
+import Lattice from "./Lattice.js";
 import ReactDOM from 'react-dom';
 import Slider, { Range } from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import ResizeSensor from 'resize-sensor'
-
-function uuidv4() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-        (((c ^ crypto.getRandomValues(new Uint8Array(1))[0]) & 15) >> (c / 4)).toString(16)
-    );
-}
 
 const useAnimationFrame = callback => {
     // Use useRef for mutable variables that we want to persist
@@ -33,138 +30,7 @@ const useAnimationFrame = callback => {
     }, []); // Make sure the effect runs only once
 }
 
-class Vector extends Array {
-    constructor(...array) {
-        if (array.length === 1) {
-            super();
-            this.push(array[0]);
-        } else super(...array);
-    }
-
-    add(other) {
-        for(let i = 0; i < this.length; i++) {
-            this[i] += other[i];
-        }
-        return this;
-    }
-    magnitude() {
-        return Math.sqrt(this.map((e, i) => Math.pow(e, 2)).reduce((prev, v) => prev + v, 0));
-    }
-    normalize() {
-        this.scale(1/this.magnitude())
-        return this;
-    }
-
-    scale(s) {
-        for(let i = 0; i < this.length; i++) this[i] *= s;
-        return this;
-    }
-}
-class Lattice extends Array {
-    
-    constructor(targetCellCount, width, height) {
-        super();
-        this.itemMap = new Map();
-        this.targetCellCount = targetCellCount;
-        this.width = width;
-        this.height = height;
-        this.updateCols();
-    }
-    updateCols() {
-        let targetCells = Math.ceil(this.itemMap.size / this.targetCellCount);
-        if(this.itemMap.size == 0) {
-            this.length = 0;
-            
-            this.cols = 1;
-            this.rows = 1;
-            this[0] = new Array(1).fill(new Set());
-            this.cellWidth = Math.ceil(this.width / this.cols)
-            this.cellHeight = Math.ceil(this.height / this.rows);
-            return;
-        }
-        let count = 1;
-        let oldRows = this.rows;
-        let oldCols = this.cols;
-        this.cols = 1;
-        this.rows = 1;
-        this.cellWidth = Math.ceil(this.width / this.cols)
-        this.cellHeight = Math.ceil(this.height / this.rows)
-        while(count < targetCells) {
-            if(this.cellWidth < this.cellHeight) {
-                this.rows++;
-            } else { 
-                this.cols++;
-                
-            }
-            count = this.rows * this.cols;
-            this.cellWidth = Math.ceil(this.width / this.cols)
-            this.cellHeight = Math.ceil(this.height / this.rows)
-        }
-        this.length = this.rows;
-        if(oldRows === this.rows && oldCols === this.cols) return;
-        for(let i = 0; i < this.rows; i++) {
-            this[i] = new Array(this.cols).fill(new Set());
-        }
-        let items = [...this.itemMap.keys()];
-        for(let item of items) { 
-            let mCoords = this.xyToMatrix(item.x, item.y);
-            this[mCoords.row][mCoords.col].add(item);
-            this.itemMap.set(item, mCoords);
-        }
-        
-    }
-    
-    xyToMatrix(x, y) {
-        let r = {
-            col: Math.min(this.cols-1, Math.floor(Math.max(0, Math.min(this.width, x)) / this.cellWidth)),
-            row: Math.min(this.rows-1, Math.floor(Math.max(0, Math.min(this.height, y)) / this.cellHeight))
-        };
-        
-//        console.log(`xyToMatrix(${x}, ${y}) = `,r);
-        return r;
-    }
-    distanceToCell(row, col, x, y) {
-        let cellX = col * this.cellWidth;
-        let cellY = row * this.cellHeight;
-        let cellBottom = cellY + this.cellHeight;
-        let cellRight = cellX + this.cellWidth;
-        return Math.min(
-            Math.sqrt(Math.pow(cellX - x, 2) + Math.pow(cellY - y, 2)),
-            Math.sqrt(Math.pow(cellX - x, 2) + Math.pow(cellBottom - y, 2)),
-            Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellY - y, 2)),
-            Math.sqrt(Math.pow(cellRight - x, 2) + Math.pow(cellBottom - y, 2))
-        )
-        
-    }
-    add(model) {
-        let mCoords = this.xyToMatrix(model.x, model.y)
-        this.itemMap.set(model, mCoords)
-        this[mCoords.row][mCoords.col].add(model);
-        this.updateCols();
-    }
-    delete(model) {
-        if(this.itemMap.has(model)) {
-            
-            let mCoords = this.itemMap.get(model);
-            this.itemMap.delete(model);
-            this[mCoords.row][mCoords.col].delete(model);
-            this.updateCols(); 
-            
-        }
-    } 
-    
-    updatePosition(model) {
-        let mCoords = this.xyToMatrix(model.x, model.y);
-        if(!this[mCoords.row][mCoords.col].has(model)) {
-            this[mCoords.row][mCoords.col].add(model);
-            let prevMCoords = this.itemMap.get(model);
-            if(prevMCoords) this[prevMCoords.row][prevMCoords.col].delete(model);
-            this.itemMap.set(model, mCoords);
-        }
-    }
-}
-
-const ParticlesView = (props)=> {
+const ParticlesRenderer = (props)=> {
 
     const [count, setCount] = React.useState(0)
 
@@ -285,45 +151,13 @@ const ParticlesView = (props)=> {
     
                    
     return  <svg onMouseEnter={onMouseEnter} onMouseMove={onMouseMove} onMouseDown={onMouseDown} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave} preserveAspectRatio="none" version="1.1" width={props.width} height={props.height} xmlns="http://www.w3.org/2000/svg">
-                <g>
-                {hLines}
-                </g>
-                <g>
-                {vLines}
-                </g>
-                <g>
-                {ps}
-                </g>
+                <g>{hLines}</g>
+                <g>{vLines}</g>
+                <g>{ps}</g>
             </svg>;
 }
 
-class Particle {
-    constructor(worldWidth, worldHeight) {
-        
-        let radius = 3+(Math.random() * 5);
-        let x = Math.random() * worldWidth;
-        let y = Math.random() * worldHeight;
-
-        x = Math.min(Math.max(x, radius), worldWidth-radius);
-        y = Math.min(Math.max(y, radius), worldHeight-radius);
-        let dx = Math.random() - 0.5;
-        let dy = Math.random() - 0.5;
-        let speed = 1;//Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
-        dx /= speed;
-        dy /= speed;
-        speed /= (radius);
-        //        speed = 1;
-
-        this.id = uuidv4();
-        this.x = x;
-        this.y = y;
-        this.v = new Vector(dx, dy);
-        this.s = speed;
-        this.r = radius;
-    }
-}
-
-class Particles extends React.Component {
+class ParticlesView extends React.Component {
     constructor(props) {
         super(props);
         this.config = props.config;
@@ -338,7 +172,6 @@ class Particles extends React.Component {
         const target = event.target;
         let value = parseFloat(target.value);
         const name = target.name
-//        console.log("onSliderChange() value = ",value, "name = ", name);
         this.setState({
             [name]: value 
         });
@@ -438,7 +271,7 @@ class Particles extends React.Component {
                         </div>
                     </div>
                     <div className="particles-view">
-                        <ParticlesView width={this.config.width} height={this.config.height} models={this.models} config={this.config}/>
+                        <ParticlesRenderer width={this.config.width} height={this.config.height} models={this.models} config={this.config}/>
                     </div>
                 </div>;
     }
@@ -472,7 +305,7 @@ function App() {
 
     return (
         <div id="app-container" className="App">
-            <Particles config={config} models={lattice}/>
+            <ParticlesView config={config} models={lattice}/>
         </div>
     );
 }
