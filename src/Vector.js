@@ -16,7 +16,10 @@ export default class Vector extends Array {
         return Math.sqrt(this.map((e, i) => Math.pow(e, 2)).reduce((prev, v) => prev + v, 0));
     }
     normalize() {
-        this.scale(1/this.magnitude())
+        let m = this.magnitude();
+        if(m !== 0) {
+            this.scale(1/this.magnitude())   
+        }
         return this;
     }
 
@@ -25,3 +28,4 @@ export default class Vector extends Array {
         return this;
     }
 }
+

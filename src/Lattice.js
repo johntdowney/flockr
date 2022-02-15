@@ -6,10 +6,10 @@ export default class Lattice extends Array {
         this.targetCellCount = targetCellCount;
         this.width = width;
         this.height = height;
-        this.updateCols();
+        this.#updateCols();
     }
     
-    updateCols() {
+    #updateCols() {
         let targetCells = Math.ceil(this.itemMap.size / this.targetCellCount);
         if(this.itemMap.size == 0) {
             this.length = 0;
@@ -78,7 +78,7 @@ export default class Lattice extends Array {
         let mCoords = this.xyToMatrix(model.x, model.y)
         this.itemMap.set(model, mCoords)
         this[mCoords.row][mCoords.col].add(model);
-        this.updateCols();
+        this.#updateCols();
     }
     
     delete(model) {
@@ -86,17 +86,20 @@ export default class Lattice extends Array {
             let mCoords = this.itemMap.get(model);
             this.itemMap.delete(model);
             this[mCoords.row][mCoords.col].delete(model);
-            this.updateCols(); 
+            this.#updateCols(); 
         }
     } 
     
     updatePosition(model) {
+        let prevMCoords = this.itemMap.get(model);
+        if(!prevMCoords) return;
         let mCoords = this.xyToMatrix(model.x, model.y);
-        if(!this[mCoords.row][mCoords.col].has(model)) {
-            this[mCoords.row][mCoords.col].add(model);
-            let prevMCoords = this.itemMap.get(model);
-            if(prevMCoords) this[prevMCoords.row][prevMCoords.col].delete(model);
-            this.itemMap.set(model, mCoords);
-        }
+        if(prevMCoords.row === mCoords.row && prevMCoords.col === mCoords.col) return;
+        
+        this[mCoords.row][mCoords.col].add(model);
+
+        this[prevMCoords.row][prevMCoords.col].delete(model);
+        this.itemMap.set(model, mCoords);
+        
     }
 }
