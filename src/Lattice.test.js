@@ -17,8 +17,11 @@ test('Lattice: Add 100 particles - 400x200 - 10 particles/cell', () => {
         expect(actualMCoords.row).toBe(mCoords.row)
         expect(actualMCoords.col).toBe(mCoords.col)
     }
-//    for(let i = 0; i < lattice.itemMap)
+
 });
+
+
+
 //    
 //test('Lattice: Add 100 particles - 400x200 - 10 particles/cell', () => {
 //    const width = 400, height = 200, targetParticlesPerCell = 10, totalParticles = 100;

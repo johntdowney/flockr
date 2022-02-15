@@ -125,8 +125,7 @@ const ParticlesRenderer = (props)=> {
     let rowHeight = props.height / props.models.rows;
     
     const hLines = new Array(props.models.rows-1).fill().map((e,i)=>{ 
-        return <line key={"hline-"+i} x1="0" y1={(i + 1) * rowHeight} x2={props.width} y2={(i + 1) * rowHeight} stroke="black"
-       strokeOpacity="0.2" ></line> 
+        return <line key={"hline-"+i} x1="0" y1={(i + 1) * rowHeight} x2={props.width} y2={(i + 1) * rowHeight} stroke="black" strokeOpacity="0.2" ></line> 
     });
     
     const vLines = new Array(props.models.cols-1).fill().map((e,i)=>{
