@@ -9,7 +9,7 @@ function uuidv4() {
 };
 
 export default class Particle {
-    constructor(worldWidth, worldHeight) {
+    constructor(type, worldWidth, worldHeight) {
         
         let radius = 3+(Math.random() * 5);
         let x = Math.random() * worldWidth;
@@ -31,5 +31,6 @@ export default class Particle {
         this.v = new Vector(dx, dy);
         this.s = speed;
         this.r = radius;
+        this.type = type;
     }
 };

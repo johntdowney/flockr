@@ -22,17 +22,7 @@ export default class ParticlesView extends React.Component {
 
         if(name === 'count') {
             value = parseInt(value);
-            while(value > this.models.itemMap.size) {
-                let m = new Particle(this.config.width, this.config.height);
-                this.models.add(m);
-            }
-            while(value < this.models.itemMap.size) {
-                let m = this.models.itemMap.keys().next().value;
-                if(m) {
-                    this.models.delete(m);
-                }
-                
-            }
+            this.models.adjustCount(value, ()=>new Particle('a', this.config.width, this.config.height));
         }
         this.config[name] = value;
     }

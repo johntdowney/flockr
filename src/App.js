@@ -5,7 +5,7 @@ import ParticlesView from './ParticlesView.js';
 
 function App() {
     let config = {
-        count:60,
+        count:120,
         width: window.innerWidth,
         height: window.innerHeight,
         attraction:0.61,
@@ -14,7 +14,7 @@ function App() {
         repellent: 0.028,
         herd:0.45,
         speed:0.15,
-        latticeSize: 15,
+        latticeSize: 500,
         pointer:{x:0,y:0},
         pointerDown:false
     }
@@ -22,7 +22,7 @@ function App() {
     const lattice = new Lattice(config.latticeSize, config.width, config.height);
     
     for(let i = 0; i < config.count; i++) {
-        lattice.add(new Particle(config.width, config.height));
+        lattice.add(new Particle('a', config.width, config.height));
     }
 
     return (

@@ -11,7 +11,7 @@ test('correctly translates (x,y) to (row,col) coordinates', () => {
     expect(xy.col).toBe(0)
     
     for(let i = 0; i < 100; i++) {
-        lattice.add(new Particle(width, height));
+        lattice.add(new Particle('a', width, height));
     }
     expect(lattice.rows).toBe(2)
     expect(lattice.cols).toBe(5)
@@ -51,7 +51,7 @@ test('correctly updates Particles\' position', () => {
     const lattice = new Lattice(targetParticlesPerCell, width, height);
     
     for(let i = 0; i < totalParticles; i++) {
-        lattice.add(new Particle(width, height));
+        lattice.add(new Particle('a', width, height));
     }
     
     const tests =[
@@ -86,7 +86,7 @@ test('can add Particles to/remove Particles from', () => {
     for(let i = 0; i < totalParticles; i++) {
         expect(lattice.itemMap.size).toBe(i);
         expect(lattice.rows * lattice.cols).toBeGreaterThanOrEqual((i)/targetParticlesPerCell);
-        lattice.add(new Particle(width, height));
+        lattice.add(new Particle('a', width, height));
     }
     expect(lattice.itemMap.size).toBe(totalParticles);
     
@@ -104,7 +104,7 @@ test('correctly calculates distance to cell', () => {
     const lattice = new Lattice(targetParticlesPerCell, width, height);
     
     for(let i = 0; i < 100; i++) {
-        lattice.add(new Particle(width, height));
+        lattice.add(new Particle('a', width, height));
     }
     expect(lattice.rows).toBe(2)
     expect(lattice.cols).toBe(5)
@@ -122,7 +122,7 @@ test('correctly handles Particles/incorrect input', () => {
     const lattice = new Lattice(targetParticlesPerCell, width, height);
     
     for(let i = 0; i < 100; i++) {
-        lattice.add(new Particle(width, height));
+        lattice.add(new Particle('a', width, height));
     }
     let nonsenseObject = {id:"I'm nothing!"};
     lattice.delete(nonsenseObject);
